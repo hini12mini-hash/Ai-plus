@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ai image generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(145deg, #0b1a2e, #1a2f4a);
+      color: #e0f0ff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(20, 40, 70, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 40px;
+      padding: 30px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 100, 255, 0.3);
+      border: 1px solid rgba(0, 150, 255, 0.3);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, #6ab7ff, #0088ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .subtitle {
+      text-align: center;
+      color: #a0c4ff;
+      margin-bottom: 25px;
+      font-size: 1rem;
+    }
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #b0d0ff;
+    }
+    select, input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 30px;
+      border: 1px solid #3a6a9a;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 1rem;
+      transition: 0.3s;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #0088ff;
+      box-shadow: 0 0 15px rgba(0,136,255,0.4);
+    }
+    option { background: #1a2f4a; }
+    .flex-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .flex-row > * { flex: 1; min-width: 120px; }
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #0066ff, #0033aa);
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 8px 25px rgba(0, 51, 170, 0.4);
+      margin-top: 8px;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 12px 35px rgba(0,51,170,0.6);
+    }
+    #status {
+      margin: 12px 0;
+      text-align: center;
+      font-size: 0.95rem;
+      min-height: 28px;
+    }
+    #result {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    #result img {
+      max-width: 100%;
+      max-height: 450px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,136,255,0.4);
+      border: 2px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #result img:hover { transform: scale(1.02); }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.75rem;
+      color: #6a8aaa;
+    }
+    .error-detail { color: #ff6b6b; font-size: 0.9rem; margin-top: 5px; }
+    .note { font-size: 0.8rem; color: #8ab0d0; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🌊 Ai image generator</h1>
+  <div class="subtitle">تولید عکس با قدرتمندترین مدل‌های هوش مصنوعی + آپلود و ویرایش</div>
+
+  <div class="form-group">
+    <label for="model">🧠 مدل</label>
+    <select id="model">
+      <option value="stability">⭐ Stability AI (پیش‌فرض – تضمینی)</option>
+      <option value="auto">⭐ بهترین خودکار (اول Stability، بعد Flux)</option>
+      <option value="flux2pro">Flux 2 Pro (Replicate)</option>
+      <option value="sdxl">SDXL (Hugging Face)</option>
+      <option value="sd3">Stable Diffusion 3 (HF)</option>
+      <option value="nanobanana">Nano Banana 2 Pro (HF)</option>
+      <option value="dalle3">DALL‑E 3 (OpenAI)</option>
+      <option value="free">🔥 رایگان بدون کلید (SDXL via HF)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="prompt">📝 پرامپت</label>
+    <input type="text" id="prompt" placeholder="مثلاً: یک دختر گربه‌ای صورتی، واقع‌گرایانه، ۸k" value="beautiful pink cat girl, photorealistic, soft lighting, 8k">
+  </div>
+
+  <div class="form-group">
+    <label for="imageUpload">🖼️ آپلود عکس (برای ویرایش هوش مصنوعی – Image‑to‑Image)</label>
+    <input type="file" id="imageUpload" accept="image/*">
+    <div class="note">عکس آپلود شده به یک سرور موقت فرستاده می‌شود و در مدل‌های پشتیبان استفاده می‌شود.</div>
+  </div>
+
+  <div class="flex-row">
+    <div class="form-group">
+      <label for="aspect">📐 نسبت ابعاد</label>
+      <select id="aspect">
+        <option value="1:1">۱:۱ (مربع)</option>
+        <option value="3:4">۳:۴ (پرتره)</option>
+        <option value="4:3">۴:۳ (منظره)</option>
+        <option value="16:9">۱۶:۹ (سینمایی)</option>
+        <option value="9:16">۹:۱۶ (عمودی)</option>
+        <option value="21:9">۲۱:۹ (اولترا واید)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="count">تعداد</label>
+      <select id="count">
+        <option value="1">۱</option>
+        <option value="2">۲</option>
+        <option value="4">۴</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex-row">
+    <div class="form-group">
+      <label for="quality">📺 کیفیت خروجی</label>
+      <select id="quality">
+        <option value="standard">استاندارد (max 1024)</option>
+        <option value="fullhd">FullHD (1920x1080)</option>
+        <option value="4k">4K (3840x2160)</option>
+        <option value="8k">8K (7680x4320)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="upscale">🔍 آپ‌اسکیل</label>
+      <select id="upscale">
+        <option value="none">بدون آپ‌اسکیل</option>
+        <option value="realesrgan">Real‑ESRGAN (Replicate)</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="genBtn">✨ تولید</button>
+  <div id="status">⏳ آماده</div>
+  <div id="result"></div>
+  <div class="footer">⚡ ساخته شده توسط CAT – برای دانلود روی عکس کلیک کنید</div>
+</div>
+
+<script>
+  // ---------- توکن‌های شما ----------
+  const TOKENS = {
+    replicate: "r8_BPEG6lDhxsnVHpGxyf7jenTPkujH0S11wVGLg",
+    hf: "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",
+    stability1: "sk-geTLqPDjgOAEo6DndqiYAxW4qe0xvSSSdB8GXn65CcppPIXR",
+    stability2: "sk-yWUu1p7xPLSlRkFT00XBRsgd9ztqPT0AjrLO8SQ5mkxNjqXc",
+    openai: "sk-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" // اگر دارید جایگزین کنید
+  };
+
+  // ---------- تابع ابعاد ----------
+  function getDimensions(aspect, quality) {
+    const aspectMap = {
+      "1:1": 1, "3:4": 3/4, "4:3": 4/3, "16:9": 16/9, "9:16": 9/16, "21:9": 21/9
+    };
+    const qualityMap = { standard: 1024, fullhd: 1920, "4k": 3840, "8k": 7680 };
+    let maxDim = qualityMap[quality] || 1024;
+    let ratio = aspectMap[aspect] || 1;
+    let w, h;
+    if (ratio >= 1) { w = maxDim; h = Math.round(w / ratio); if (h > maxDim) { h = maxDim; w = Math.round(h * ratio); } }
+    else { h = maxDim; w = Math.round(h * ratio); if (w > maxDim) { w = maxDim; h = Math.round(w / ratio); } }
+    return { w, h };
+  }
+
+  // ---------- توابع کمکی برای آپلود عکس به سرور موقت ----------
+  async function uploadImageToTemp(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const resp = await fetch('https://tmp.ninja/upload', { method: 'POST', body: formData });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.url; // returns direct URL
+      }
+    } catch (e) { console.error('Upload error:', e); }
+    return null;
+  }
+
+  // ---------- پروکسی CORS (برای دور زدن محدودیت‌های مرورگر) ----------
+  async function fetchWithProxy(url, options = {}) {
+    // ابتدا مستقیماً امتحان کن
+    try {
+      const resp = await fetch(url, options);
+      if (resp.ok) return resp;
+    } catch (e) { /* fail silently */ }
+    // اگر مستقیم کار نکرد، از پروکسی استفاده کن (برای GET از allorigins، برای POST از corsproxy)
+    try {
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+      const resp = await fetch(proxyUrl, options);
+      if (resp.ok) return resp;
+    } catch (e) {}
+    throw new Error('Unable to fetch even with proxy.');
+  }
+
+  // ---------- توابع API (با پروکسی در صورت نیاز) ----------
+  async function callStability(prompt, w, h, n) {
+    const key = TOKENS.stability1;
+    if (!key) return null;
+    const endpoint = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
+    const headers = { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' };
+    const body = { text_prompts: [{ text: prompt }], width: Math.min(w, 1024), height: Math.min(h, 1024), samples: n };
+    try {
+      const resp = await fetchWithProxy(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.artifacts.map(art => 'data:image/png;base64,' + art.base64);
+      } else {
+        const errText = await resp.text();
+        throw new Error(`Stability API: ${resp.status} - ${errText}`);
+      }
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function callFlux(prompt, w, h, n, imageUrl) {
+    const key = TOKENS.replicate;
+    if (!key) return null;
+    const endpoint = 'https://api.replicate.com/v1/predictions';
+    const headers = { 'Authorization': `Token ${key}`, 'Content-Type': 'application/json' };
+    let input = { prompt, width: Math.min(w, 2048), height: Math.min(h, 2048), num_outputs: n };
+    if (imageUrl) input.image = imageUrl;
+    try {
+      const resp = await fetchWithProxy(endpoint, { method: 'POST', headers, body: JSON.stringify({ version: 'black-forest-labs/flux-2-pro', input }) });
+      if (!resp.ok) throw new Error(`Replicate start: ${resp.status}`);
+      const data = await resp.json();
+      const id = data.id;
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const check = await fetchWithProxy(`https://api.replicate.com/v1/predictions/${id}`, { headers });
+        if (!check.ok) throw new Error(`Replicate status: ${check.status}`);
+        const statusData = await check.json();
+        if (statusData.status === 'succeeded') return statusData.output;
+        if (statusData.status === 'failed') throw new Error('Replicate: تولید ناموفق');
+      }
+      return null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function callHF(model, prompt, imageUrl) {
+    const key = TOKENS.hf;
+    const endpoint = `https://api-inference.huggingface.co/models/${model}`;
+    const headers = key ? { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    let payload = { inputs: prompt };
+    if (imageUrl) {
+      // برخی مدل‌های HF از image ورودی پشتیبانی می‌کنند – اما ساختار متفاوت است
+      // برای سادگی، فعلاً فقط متن
+    }
+    try {
+      const resp = await fetchWithProxy(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        return URL.createObjectURL(blob);
+      } else if (resp.status === 503) {
+        await new Promise(r => setTimeout(r, 5000));
+        return callHF(model, prompt, imageUrl);
+      } else {
+        const errText = await resp.text();
+        throw new Error(`HF ${model}: ${resp.status} - ${errText}`);
+      }
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function callFree(prompt, imageUrl) {
+    return callHF('stabilityai/stable-diffusion-xl-base-1.0', prompt, imageUrl);
+  }
+
+  async function callDalle3(prompt, w, h, n) {
+    const key = TOKENS.openai;
+    if (!key || key === 'sk-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA') return null;
+    const endpoint = 'https://api.openai.com/v1/images/generations';
+    const headers = { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' };
+    const body = { model: 'dall-e-3', prompt, n, size: `${Math.min(w,1024)}x${Math.min(h,1024)}` };
+    try {
+      const resp = await fetchWithProxy(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+      if (!resp.ok) throw new Error(`OpenAI: ${resp.status}`);
+      const data = await resp.json();
+      if (data.data) return data.data.map(item => item.url);
+      return null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  // ---------- آپ‌اسکیل با Real-ESRGAN (از طریق Replicate) ----------
+  async function callUpscale(imageUrl) {
+    const key = TOKENS.replicate;
+    if (!key) return imageUrl;
+    const endpoint = 'https://api.replicate.com/v1/predictions';
+    const headers = { 'Authorization': `Token ${key}`, 'Content-Type': 'application/json' };
+    const input = { image: imageUrl, scale: 2 }; // scale 2x
+    try {
+      const resp = await fetchWithProxy(endpoint, { method: 'POST', headers, body: JSON.stringify({ version: 'lucataco/real-esrgan:...', input }) });
+      if (!resp.ok) throw new Error(`Upscale start: ${resp.status}`);
+      const data = await resp.json();
+      const id = data.id;
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const check = await fetchWithProxy(`https://api.replicate.com/v1/predictions/${id}`, { headers });
+        if (!check.ok) throw new Error(`Upscale status: ${check.status}`);
+        const statusData = await check.json();
+        if (statusData.status === 'succeeded') return statusData.output;
+        if (statusData.status === 'failed') throw new Error('Upscale failed');
+      }
+      return imageUrl; // fallback to original
+    } catch (e) {
+      console.error(e);
+      return imageUrl;
+    }
+  }
+
+  // ---------- تولید اصلی ----------
+  async function generate() {
+    const model = document.getElementById('model').value;
+    const prompt = document.getElementById('prompt').value.trim();
+    const aspect = document.getElementById('aspect').value;
+    const count = parseInt(document.getElementById('count').value);
+    const quality = document.getElementById('quality').value;
+    const upscale = document.getElementById('upscale').value;
+    const fileInput = document.getElementById('imageUpload');
+    const status = document.getElementById('status');
+    const resultDiv = document.getElementById('result');
+
+    if (!prompt && !fileInput.files.length) {
+      status.textContent = '⚠️ حداقل پرامپت یا عکس را وارد کنید.';
+      return;
+    }
+    status.innerHTML = '⏳ در حال تولید...';
+    resultDiv.innerHTML = '';
+
+    // آپلود عکس به سرور موقت (اگر انتخاب شده باشد)
+    let imageUrl = null;
+    if (fileInput.files.length > 0) {
+      status.textContent = '⏳ در حال آپلود عکس...';
+      imageUrl = await uploadImageToTemp(fileInput.files[0]);
+      if (!imageUrl) {
+        status.textContent = '❌ خطا در آپلود عکس. بدون عکس ادامه می‌دهیم.';
+      } else {
+        status.textContent = '✅ عکس آپلود شد.';
+      }
+    }
+
+    const dims = getDimensions(aspect, quality);
+    let width = dims.w, height = dims.h;
+
+    let imageUrls = [];
+    let selectedModel = model;
+    let errorMsg = '';
+
+    try {
+      if (model === 'auto') {
+        // اولویت: Stability > Flux > SDXL > free
+        let result = await callStability(prompt, width, height, count);
+        if (result && result.length > 0) {
+          selectedModel = 'stability';
+          imageUrls = result;
+        } else {
+          result = await callFlux(prompt, width, height, count, imageUrl);
+          if (result && result.length > 0) {
+            selectedModel = 'flux2pro';
+            imageUrls = result;
+          } else {
+            result = await callHF('stabilityai/stable-diffusion-xl-base-1.0', prompt, imageUrl);
+            if (result) {
+              selectedModel = 'sdxl';
+              imageUrls = [result];
+            } else {
+              result = await callFree(prompt, imageUrl);
+              if (result) {
+                selectedModel = 'free';
+                imageUrls = [result];
+              } else {
+                errorMsg = 'همه مدل‌ها شکست خوردند.';
+              }
+            }
+          }
+        }
+      } else {
+        // مدل مشخص
+        if (model === 'stability') {
+          imageUrls = await callStability(prompt, width, height, count);
+        } else if (model === 'flux2pro') {
+          imageUrls = await callFlux(prompt, width, height, count, imageUrl);
+        } else if (model === 'sdxl' || model === 'sd3' || model === 'nanobanana') {
+          let hfModel = '';
+          if (model === 'sdxl') hfModel = 'stabilityai/stable-diffusion-xl-base-1.0';
+          else if (model === 'sd3') hfModel = 'stabilityai/stable-diffusion-3.5-large';
+          else hfModel = 'stabilityai/stable-diffusion-xl-base-1.0';
+          const url = await callHF(hfModel, prompt, imageUrl);
+          if (url) imageUrls = [url];
+        } else if (model === 'dalle3') {
+          imageUrls = await callDalle3(prompt, width, height, count);
+        } else if (model === 'free') {
+          const url = await callFree(prompt, imageUrl);
+          if (url) imageUrls = [url];
+        }
+        if (!imageUrls || imageUrls.length === 0) {
+          errorMsg = `مدل ${model} تصویری تولید نکرد.`;
+        }
+      }
+    } catch (e) {
+      errorMsg = 'خطا: ' + e.message;
+    }
+
+    if (errorMsg || !imageUrls || imageUrls.length === 0) {
+      status.innerHTML = `❌ ${errorMsg || 'هیچ تصویری تولید نشد.'}`;
+      return;
+    }
+
+    // آپ‌اسکیل (اگر انتخاب شده باشد)
+    if (upscale === 'realesrgan' && imageUrls.length > 0) {
+      status.textContent = '⏳ در حال آپ‌اسکیل...';
+      const upscaledUrls = [];
+      for (let url of imageUrls) {
+        const upscaled = await callUpscale(url);
+        upscaledUrls.push(upscaled);
+      }
+      imageUrls = upscaledUrls;
+    }
+
+    status.textContent = `✅ تولید شده با ${selectedModel}`;
+    resultDiv.innerHTML = '';
+    for (let url of imageUrls) {
+      const img = document.createElement('img');
+      img.src = url;
+      // برای دانلود، کاربر روی عکس کلیک می‌کند
+      img.onclick = () => downloadImage(url);
+      img.title = 'برای دانلود کلیک کنید';
+      resultDiv.appendChild(img);
+    }
+    // دیگر دانلود خودکار انجام نمی‌شود
+  }
+
+  function downloadImage(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ai_generated.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  document.getElementById('genBtn').addEventListener('click', generate);
+</script>
+</body>
+</html>

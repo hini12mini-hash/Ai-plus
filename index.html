@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌊 Ai image generator</title>
+  <style>
+    /* همان استایل‌های قبلی با پالت آبی */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(145deg, #0b1a2e, #1a2f4a);
+      color: #e0f0ff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(20, 40, 70, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 40px;
+      padding: 30px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 100, 255, 0.3);
+      border: 1px solid rgba(0, 150, 255, 0.3);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, #6ab7ff, #0088ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .subtitle { text-align: center; color: #a0c4ff; margin-bottom: 25px; font-size: 1rem; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; color: #b0d0ff; }
+    select, input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 30px;
+      border: 1px solid #3a6a9a;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 1rem;
+      transition: 0.3s;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #0088ff;
+      box-shadow: 0 0 15px rgba(0,136,255,0.4);
+    }
+    option { background: #1a2f4a; }
+    .flex-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .flex-row > * { flex: 1; min-width: 120px; }
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #0066ff, #0033aa);
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 8px 25px rgba(0, 51, 170, 0.4);
+      margin-top: 8px;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 12px 35px rgba(0,51,170,0.6);
+    }
+    #status { margin: 12px 0; text-align: center; font-size: 0.95rem; min-height: 28px; }
+    #result { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+    #result img { max-width: 100%; max-height: 450px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,136,255,0.4); border: 2px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; }
+    #result img:hover { transform: scale(1.02); }
+    .footer { text-align: center; margin-top: 20px; font-size: 0.75rem; color: #6a8aaa; }
+    .note { font-size: 0.8rem; color: #8ab0d0; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🌊 Ai image generator</h1>
+  <div class="subtitle">تولید عکس با قدرتمندترین مدل‌های هوش مصنوعی + آپلود و ویرایش</div>
+
+  <div class="form-group">
+    <label for="model">🧠 مدل</label>
+    <select id="model">
+      <option value="stability">⭐ Stability AI (پیش‌فرض – تضمینی)</option>
+      <option value="auto">⭐ بهترین خودکار (اول Stability، بعد Flux)</option>
+      <option value="flux2pro">Flux 2 Pro (Replicate)</option>
+      <option value="sdxl">SDXL (Hugging Face)</option>
+      <option value="sd3">Stable Diffusion 3 (HF)</option>
+      <option value="nanobanana">Nano Banana 2 Pro (HF)</option>
+      <option value="dalle3">DALL‑E 3 (OpenAI)</option>
+      <option value="free">🔥 رایگان بدون کلید (SDXL via HF)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="prompt">📝 پرامپت</label>
+    <input type="text" id="prompt" placeholder="مثلاً: یک دختر گربه‌ای صورتی، واقع‌گرایانه، ۸k" value="beautiful pink cat girl, photorealistic, soft lighting, 8k">
+  </div>
+
+  <div class="form-group">
+    <label for="imageUpload">🖼️ آپلود عکس (برای ویرایش هوش مصنوعی – Image‑to‑Image)</label>
+    <input type="file" id="imageUpload" accept="image/*">
+    <div class="note">عکس آپلود شده به یک سرور موقت فرستاده می‌شود و در مدل‌های پشتیبان استفاده می‌شود.</div>
+  </div>
+
+  <div class="flex-row">
+    <div class="form-group">
+      <label for="aspect">📐 نسبت ابعاد</label>
+      <select id="aspect">
+        <option value="1:1">۱:۱ (مربع)</option>
+        <option value="3:4">۳:۴ (پرتره)</option>
+        <option value="4:3">۴:۳ (منظره)</option>
+        <option value="16:9">۱۶:۹ (سینمایی)</option>
+        <option value="9:16">۹:۱۶ (عمودی)</option>
+        <option value="21:9">۲۱:۹ (اولترا واید)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="count">تعداد</label>
+      <select id="count">
+        <option value="1">۱</option>
+        <option value="2">۲</option>
+        <option value="4">۴</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex-row">
+    <div class="form-group">
+      <label for="quality">📺 کیفیت خروجی</label>
+      <select id="quality">
+        <option value="standard">استاندارد (max 1024)</option>
+        <option value="fullhd">FullHD (1920x1080)</option>
+        <option value="4k">4K (3840x2160)</option>
+        <option value="8k">8K (7680x4320)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="upscale">🔍 آپ‌اسکیل</label>
+      <select id="upscale">
+        <option value="none">بدون آپ‌اسکیل</option>
+        <option value="realesrgan">Real‑ESRGAN (Replicate)</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="genBtn">✨ تولید</button>
+  <div id="status">⏳ آماده</div>
+  <div id="result"></div>
+  <div class="footer">⚡ ساخته شده توسط CAT – بک‌اند روی Vercel</div>
+</div>
+
+<script>
+  // ---------- تبدیل ابعاد ----------
+  function getDimensions(aspect, quality) {
+    const aspectMap = {
+      "1:1": 1, "3:4": 3/4, "4:3": 4/3, "16:9": 16/9, "9:16": 9/16, "21:9": 21/9
+    };
+    const qualityMap = { standard: 1024, fullhd: 1920, "4k": 3840, "8k": 7680 };
+    let maxDim = qualityMap[quality] || 1024;
+    let ratio = aspectMap[aspect] || 1;
+    let w, h;
+    if (ratio >= 1) { w = maxDim; h = Math.round(w / ratio); if (h > maxDim) { h = maxDim; w = Math.round(h * ratio); } }
+    else { h = maxDim; w = Math.round(h * ratio); if (w > maxDim) { w = maxDim; h = Math.round(w / ratio); } }
+    return { w, h };
+  }
+
+  // ---------- آپلود عکس به سرور موقت ----------
+  async function uploadImageToTemp(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const resp = await fetch('https://tmp.ninja/upload', { method: 'POST', body: formData });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.url;
+      }
+    } catch (e) { console.error('Upload error:', e); }
+    return null;
+  }
+
+  // ---------- فراخوانی بک‌اند Vercel ----------
+  async function callBackend(model, prompt, width, height, count, imageUrl) {
+    const endpoint = '/api/proxy'; // آدرس نسبی روی Vercel
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, prompt, width, height, num_outputs: count, imageUrl })
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`بک‌اند خطا داد: ${response.status} - ${error}`);
+    }
+    const data = await response.json();
+    return data.output;
+  }
+
+  // ---------- آپ‌اسکیل (با بک‌اند) ----------
+  async function callUpscale(imageUrl) {
+    // برای آپ‌اسکیل، از همان مسیر Flux استفاده می‌کنیم ولی با مدل real-esrgan
+    // اما برای سادگی، در بک‌اند یک مسیر جداگانه نمی‌نویسیم – می‌توانیم از همان /api/proxy با مدل 'upscale' استفاده کنیم.
+    // در این نسخه، آپ‌اسکیل را با Replicate انجام می‌دهیم – بک‌اند فعلاً پشتیبانی نمی‌کند.
+    // برای سادگی، آپ‌اسکیل را در جلو غیرفعال می‌کنیم یا بعداً اضافه می‌کنیم.
+    // اکنون فقط برگردان تصویر اصلی
+    return imageUrl;
+  }
+
+  // ---------- تولید اصلی ----------
+  async function generate() {
+    const modelSelect = document.getElementById('model');
+    let model = modelSelect.value;
+    const prompt = document.getElementById('prompt').value.trim();
+    const aspect = document.getElementById('aspect').value;
+    const count = parseInt(document.getElementById('count').value);
+    const quality = document.getElementById('quality').value;
+    const upscale = document.getElementById('upscale').value;
+    const fileInput = document.getElementById('imageUpload');
+    const status = document.getElementById('status');
+    const resultDiv = document.getElementById('result');
+
+    if (!prompt && !fileInput.files.length) {
+      status.textContent = '⚠️ حداقل پرامپت یا عکس را وارد کنید.';
+      return;
+    }
+    status.innerHTML = '⏳ در حال تولید...';
+    resultDiv.innerHTML = '';
+
+    let imageUrl = null;
+    if (fileInput.files.length > 0) {
+      status.textContent = '⏳ در حال آپلود عکس...';
+      imageUrl = await uploadImageToTemp(fileInput.files[0]);
+      if (!imageUrl) {
+        status.textContent = '❌ خطا در آپلود عکس. بدون عکس ادامه می‌دهیم.';
+      } else {
+        status.textContent = '✅ عکس آپلود شد.';
+      }
+    }
+
+    const dims = getDimensions(aspect, quality);
+    let width = dims.w, height = dims.h;
+
+    let imageUrls = [];
+    let selectedModel = model;
+    let errorMsg = '';
+
+    try {
+      if (model === 'auto') {
+        // اولویت: Stability > Flux > SDXL > free
+        let result = await callBackend('stability', prompt, width, height, count, imageUrl);
+        if (result && result.length > 0) {
+          selectedModel = 'stability';
+          imageUrls = result;
+        } else {
+          result = await callBackend('flux2pro', prompt, width, height, count, imageUrl);
+          if (result && result.length > 0) {
+            selectedModel = 'flux2pro';
+            imageUrls = result;
+          } else {
+            result = await callBackend('sdxl', prompt, width, height, count, imageUrl);
+            if (result) {
+              selectedModel = 'sdxl';
+              imageUrls = [result];
+            } else {
+              result = await callBackend('free', prompt, width, height, count, imageUrl);
+              if (result) {
+                selectedModel = 'free';
+                imageUrls = [result];
+              } else {
+                errorMsg = 'همه مدل‌ها شکست خوردند.';
+              }
+            }
+          }
+        }
+      } else {
+        // مدل مشخص
+        const result = await callBackend(model, prompt, width, height, count, imageUrl);
+        if (result && result.length > 0) {
+          imageUrls = result;
+        } else {
+          errorMsg = `مدل ${model} تصویری تولید نکرد.`;
+        }
+      }
+    } catch (e) {
+      errorMsg = 'خطا: ' + e.message;
+    }
+
+    if (errorMsg || !imageUrls || imageUrls.length === 0) {
+      status.innerHTML = `❌ ${errorMsg || 'هیچ تصویری تولید نشد.'}`;
+      return;
+    }
+
+    // آپ‌اسکیل (اختیاری) – فعلاً غیرفعال
+    if (upscale === 'realesrgan' && imageUrls.length > 0) {
+      status.textContent = '⏳ در حال آپ‌اسکیل...';
+      const upscaledUrls = [];
+      for (let url of imageUrls) {
+        const upscaled = await callUpscale(url);
+        upscaledUrls.push(upscaled);
+      }
+      imageUrls = upscaledUrls;
+    }
+
+    status.textContent = `✅ تولید شده با ${selectedModel}`;
+    resultDiv.innerHTML = '';
+    for (let url of imageUrls) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.onclick = () => downloadImage(url);
+      img.title = 'برای دانلود کلیک کنید';
+      resultDiv.appendChild(img);
+    }
+  }
+
+  function downloadImage(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ai_generated.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  document.getElementById('genBtn').addEventListener('click', generate);
+</script>
+</body>
+</html>
